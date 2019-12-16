@@ -1,134 +1,139 @@
 #!/usr/bin/python
 # encoding=utf8
 
-
+import time
+import numpy as np
+import src.utils as utils
 import matplotlib.pyplot as plt
 import matplotlib._pylab_helpers
-import numpy as np
+
 from matplotlib.collections import PatchCollection
 from matplotlib.lines import Line2D
 from matplotlib.patches import Rectangle as MatRectangle
-from random import random
-from src.entities import Point, Rectangle, Line
+from src.entities import Point, Rectangle, Line, Result
 
 
+class RandomAlgorithm:
 
-# Каретка
-class Carriage:
-    def __init__(self, start_point, algorithm):
+    def __init__(self, start_point, figures):
+        self.start_point = start_point
         self.currentPoint = start_point
-        self.algorithm = algorithm
-        self.passedRoute = {}
+        self.figures = figures
+        self.left_figures = figures.copy()
+        self.point_routes = [start_point]
+        self.routes = []
 
-    # def go_to(self, point):
-#         нари
-
-
-class Audit:
-    def __init__(self, method):
-        self.overallTime = 0
-        self.decisions = {}
-        self.method = method
-        self.figures = {'rectangle'}
-
-
-class CuttingStock:
-    def __init__(self, rectangles, lines=None):
-        if lines is None:
-            lines = []
-        self.rectangles = rectangles
-        self.lines = lines
-
-    def add_line(self, point1, point2):
-        self.lines.append(Line(point1, point2))
-
-    def remove_line(self, point1, point2):
-        self.lines.append(Line(point1, point2))
+    def generate_routes(self):
+        start_time = time.time()
+        np.random.shuffle(self.left_figures)
+        for figure in self.left_figures:
+            self.currentPoint = utils.closest_border_rectangle_point(self.currentPoint, figure)
+            self.point_routes.append(self.currentPoint)
+            self.routes.append(figure)
+        return Result('random',
+                      self.figures,
+                      self.routes,
+                      self.point_routes,
+                      value_function(self.figures, self.point_routes),
+                      sum_rectangles(self.figures),
+                      sum_routes(self.point_routes),
+                      time.time() - start_time)
 
 
-def goal_function(rectangles, lines):
+class GreedyAlgorithm:
+
+    def __init__(self, start_point, figures):
+        self.start_point = start_point
+        self.currentPoint = start_point
+        self.figures = figures
+        self.left_figures = figures.copy()
+        self.point_routes = [start_point]
+        self.routes = []
+
+    def generate_routes(self):
+        start_time = time.time()
+        left_figures = self.left_figures
+        while len(left_figures) > 1:
+            closest_point = utils.closest_border_rectangle_point(self.currentPoint, left_figures[0])
+            closest_distance = self.currentPoint.distance_to(closest_point)
+            closest_figure = left_figures[0]
+            for figure in left_figures:
+                point_to_figure = utils.closest_border_rectangle_point(self.currentPoint, figure)
+                distance = self.currentPoint.distance_to(point_to_figure)
+
+                if distance < closest_distance:
+                    closest_distance = distance
+                    closest_figure = figure
+                    closest_point = point_to_figure
+
+            self.point_routes.append(closest_point)
+            self.routes.append(closest_figure)
+            left_figures.remove(closest_figure)
+
+        return Result('Жадный',
+                      self.figures,
+                      self.routes,
+                      self.point_routes,
+                      value_function(self.figures, self.point_routes),
+                      sum_rectangles(self.figures),
+                      sum_routes(self.point_routes),
+                      time.time() - start_time)
+# class Audit:
+#     def __init__(self, method):
+#         self.overallTime = 0
+#         self.decisions = {}
+#         self.method = method
+#         self.figures = {'rectangle'}
+#
+#
+# class CuttingStock:
+#     def __init__(self, rectangles, lines=None):
+#         if lines is None:
+#             lines = []
+#         self.rectangles = rectangles
+#         self.lines = lines
+#
+#     def add_line(self, point1, point2):
+#         self.lines.append(Line(point1, point2))
+#
+#     def remove_line(self, point1, point2):
+#         self.lines.append(Line(point1, point2))
+
+
+def sum_rectangles(figures):
     sum_distance = 0
 
-    for rectangle in rectangles:
+    for rectangle in figures:
         sum_distance += rectangle.perimeter()
-    for line in lines:
-        sum_distance += line.distance()
+
     return sum_distance
 
 
-def draw(rectangles, lines):
-    figures = []
-    figures += list(map(convert_rectangle, rectangles))
-    figures += list(map(convert_line, lines))
-    draw_plot(figures)
+def sum_routes(routes):
+    sum_distance = 0
+
+    for i in range(len(routes) - 1):
+        sum_distance += routes[i].distance_to(routes[i+1])
+    return sum_distance
 
 
-def convert_rectangle(rectangle):
-    return MatRectangle(xy=(rectangle.leftPoint.x, rectangle.leftPoint.y), width=rectangle.width, height=rectangle.height)
+def value_function(figures, routes):
+    return sum_rectangles(figures) + sum_routes(routes)
 
 
-def convert_line(line):
-    return Line2D(xdata=[line.point1.x, line.point2.x], ydata=[line.point1.y, line.point2.y])
-
-# def convert_rectangles(rectangles):
-
-
-def random_init_pro(count, a_width, a_height, dispersion):
-    assert count > 1 and a_width > 1 and a_height > 1 and dispersion > 0
-
-    figures = []
-
-    figures.append(MatRectangle((0, 1), 5, 5))
-    figures.append(MatRectangle((5, 5), 5, 5))
-
-    # figures.append(Line2D([0, 5], [0, 5]))
-
-    draw_plot(figures)
-
-
-def random_init():
-    figures = []
-
-    figures.append(MatRectangle((0, 1), 5, 5))
-    figures.append(MatRectangle((5, 5), 5, 5))
-
-    figures.append(Line2D([0, 5], [0, 5]))
-
-    draw_plot(figures)
-
-def draw_plot(figures):
-    fig = plt.figure()
-    ax = fig.add_subplot(1, 1, 1)
-
-    # Major ticks every 20, minor ticks every 5
-    major_ticks = np.arange(0, 101, 20)
-    minor_ticks = np.arange(0, 101, 5)
-
-    ax.set_xticks(major_ticks)
-    ax.set_xticks(minor_ticks, minor=True)
-    ax.set_yticks(major_ticks)
-    ax.set_yticks(minor_ticks, minor=True)
-    # And a corresponding grid
-    ax.grid(which='both')
-    ax.set_xlim(0,100)
-    ax.set_ylim(0,100)
-    # plt.plot([1, 2, 3, 4, 5], [1, 2, 3, 4, 5])
-    plt.title('Фигуры раскроя')
-
-    pc = PatchCollection(figures, facecolor='r', alpha=0.5,
-                         edgecolor='Black')
-    ax.add_collection(pc)
-    plt.show()
-
-    return ax, fig
-
-
-def analyze():
-    figures=[manager.canvas.figure
-             for manager in matplotlib._pylab_helpers.Gcf.get_all_fig_managers()]
-    print(figures)
+def analyze(in_result):
+    print(in_result)
+    utils.draw_figures(in_result.figures, in_result.point_routes, 100, in_result)
 
 
 if __name__ == "__main__":
-    random_init()
-    analyze()
+    rectangles = utils.read_rectangles('../data/rectangles_file.csv')
+    startPoint = Point(0, 0)
+
+    # random_algorithm = RandomAlgorithm(startPoint, rectangles)
+    # result = random_algorithm.generate_routes()
+    # analyze(result)
+
+    greedy_algorithm = GreedyAlgorithm(startPoint, rectangles)
+    result = greedy_algorithm.generate_routes()
+    analyze(result)

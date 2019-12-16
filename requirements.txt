@@ -1,3 +1,4 @@
 unittest-xml-reporting
 opencv-python
 matplotlib
+pandas
