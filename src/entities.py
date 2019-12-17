@@ -75,20 +75,3 @@ class Rectangle:
     def is_belongs(self, point):
         return self.leftPoint.x <= point.x <= self.rightPoint.x \
                and self.leftPoint.y <= point.y <= self.rightPoint.y
-
-
-class Result:
-    def __init__(self, method, figures, routes, point_routes, overall_value, figures_value, routes_value, time=None, operations=None):
-        self.method = method
-        self.figures = figures
-        self.routes = routes
-        self.point_routes = point_routes
-        self.overall_sum = overall_value
-        self.figures_sum = figures_value
-        self.routes_sum = routes_value
-        self.time = time
-        self.operations = operations
-
-    def __str__(self):
-        return 'method={0}; count of the figures={1}; chosen routes count{2}; chosen points in routes{3}; overall_value={4}; figure_value={5}; routes_value={6}; time={7}'\
-            .format(self.method, len(self.figures), len(self.routes), '', self.overall_sum, self.figures_sum, self.routes_sum, self.time)

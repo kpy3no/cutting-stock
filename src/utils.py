@@ -4,7 +4,7 @@ import numpy as np
 from matplotlib.patches import Rectangle as MatRectangle
 import matplotlib.patches as mpatches
 import csv
-from src.entities import Rectangle, Point, Result
+from src.entities import Rectangle, Point
 
 
 # Rectangles to matplotlib.patches.Rectangle
@@ -20,12 +20,12 @@ def routes_to_points(routes):
     return list(map(lambda point: point.x, routes)), list(map(lambda point: point.y, routes))
 
 
-def draw_figures(rectangles, points, lim_point=100, result=None):
+def draw_figures(rectangles, points, lim_point=100, label=None):
     # lim_point = max(max(r.rightPoint.x for r in rectangles), max(r.rightPoint.y for r in rectangles))
-    draw_plot(rectangles_to_math_rectangle(rectangles), lim_point, routes_to_points(points), result)
+    draw_plot(rectangles_to_math_rectangle(rectangles), lim_point, routes_to_points(points), label)
 
 
-def draw_plot(figures, lim_point=100, points=None, result=None):
+def draw_plot(figures, lim_point=100, points=None, label=None):
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1)
 
@@ -49,26 +49,16 @@ def draw_plot(figures, lim_point=100, points=None, result=None):
     pc.set_array(100*np.random.random(100))
     ax.add_collection(pc)
 
-    lbl_str = 'Описание'
-    lbl_str += '\n' + 'кол-во фигур={0}'.format(len(figures))
-
-    if result is not None:
-        lbl_str += '\n' + 'алгоритм={0}'.format(result.method)
-        lbl_str += '\n' + 'требуемое время={:2.3f}'.format(result.time)
-        lbl_str += '\n' + 'общая стоимость={:2.3f}'.format(result.overall_sum)
-        lbl_str += '\n' + 'стоимость фигур={:2.3f}'.format(result.figures_sum)
-        lbl_str += '\n' + 'стоимость маршрута={:2.3f}'.format(result.routes_sum)
-
     if points is not None:
         plt.plot(points[0], points[1], '-p', color='gray',
                  markersize=5, linewidth=1,
                  markerfacecolor='white',
                  markeredgecolor='gray',
                  markeredgewidth=1)
-        lbl_str += '\n' + 'начальная точка={0},{1}'.format(points[0][0], points[1][0])
 
-    red_patch = mpatches.Patch(color='red', label=lbl_str)
-    plt.legend(handles=[red_patch], loc='center left', bbox_to_anchor=(1, 0.5))
+    if label is not None:
+        red_patch = mpatches.Patch(color='red', label=label)
+        plt.legend(handles=[red_patch], loc='center left', bbox_to_anchor=(1, 0.5))
 
     plt.show()
 
