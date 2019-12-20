@@ -71,11 +71,11 @@ def mutation(offspring_crossover, num_mutations=1):
     # Mutation changes a number of genes as defined by the num_mutations argument. The changes are random.
     mutations_counter = numpy.uint8(offspring_crossover.shape[1] / num_mutations)
 
-    for idx in range(offspring_crossover.shape[0]):
+    for idx in range(1, offspring_crossover.shape[0]):
         gene_idx = mutations_counter - 1
         for mutation_num in range(num_mutations):
-            # The random value to be added to the gene.
-            random_index = numpy.random.randint(0, offspring_crossover.shape[1] - 1)
+            # The random index to swap
+            random_index = numpy.random.randint(1, offspring_crossover.shape[1])
             temp = offspring_crossover[idx, gene_idx]
             offspring_crossover[idx, gene_idx] = offspring_crossover[idx, random_index]
             offspring_crossover[idx, random_index] = temp

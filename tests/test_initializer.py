@@ -25,7 +25,7 @@ FAILURE = 'incorrect value'
 
 class InitializerTest(unittest.TestCase):
     def setUp(self):
-        self.initializer = FigureInitializer(count=100, space_max_x=50, space_max_y=50)
+        self.initializer = FigureInitializer(count=2000, space_max_x=500, space_max_y=500)
 
     def test_generate(self):
         self.initializer.generate_rectangles()
@@ -43,34 +43,6 @@ class InitializerTest(unittest.TestCase):
         plt.plot(bins, 1 / (self.initializer.varians * np.sqrt(2 * np.pi)) *
                  np.exp(- (bins - self.initializer.a_height)**2 / (2 * self.initializer.varians ** 2)), linewidth=2, color='r')
         plt.show()
-
-    # def test_intersection(self):
-    #     source = range(0, 5, 1)
-    #     same = range(0, 5, 1)
-    #     border_intersect = range(5, 10, 1)
-    #     no_intersect = range(6, 10, 1)
-    #     full_intersect = range(0, 5, 1)
-    #     intersect = range(2, 3, 1)
-    #
-    #     self.assertEqual(len(same), len(utils.intersection(same, source)))
-    #     self.assertFalse(0, len(utils.intersection(border_intersect, source)))
-    #     self.assertFalse(0, len(utils.intersection(no_intersect, source)))
-    #     self.assertEqual(len(full_intersect), len(utils.intersection(full_intersect, source)))
-    #     self.assertTrue(0 < len(utils.intersection(intersect, source)))
-    #
-    # def test_can_insert(self):
-    #     source = range(0, 5, 1), range(0, 5, 1)
-    #     same = range(0, 5, 1), range(0, 5, 1)
-    #     border_intersect = range(0, 5, 1), range(5, 10, 1)
-    #     no_intersect = range(6, 10, 1), range(6, 10, 1)
-    #     full_intersect = range(2, 4, 1), range(2, 4, 1)
-    #     intersect = range(4, 7, 1), range(4, 7, 1)
-    #
-    #     self.assertFalse(utils.can_insert(source, same))
-    #     self.assertTrue(utils.can_insert(source, border_intersect))
-    #     self.assertTrue(utils.can_insert(source, no_intersect))
-    #     self.assertTrue(utils.can_insert(source, full_intersect))
-    #     self.assertFalse(utils.can_insert(source, intersect))
 
     def test_doOverlap(self):
         source = Point(0, 0), Point(5, 5)

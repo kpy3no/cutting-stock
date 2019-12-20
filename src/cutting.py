@@ -8,6 +8,27 @@ import src.genethic as gen
 from src.entities import Point
 
 
+class FullAlgorithm:
+
+    def __init__(self, start_point, figures):
+        self.start_point = start_point
+        self.figures = figures
+        self.name = 'Полный'
+
+    def generate_routes(self):
+        routes = []
+        left_figures = self.figures.copy()
+        point_routes = [self.start_point]
+        currentPoint = self.start_point
+
+        np.random.shuffle(left_figures)
+        for figure in left_figures:
+            currentPoint = utils.closest_border_rectangle_point(currentPoint, figure)
+            point_routes.append(currentPoint)
+            routes.append(figure)
+        return point_routes
+
+
 class RandomAlgorithm:
 
     def __init__(self, start_point, figures):
@@ -89,10 +110,8 @@ class GeneticAlgorithm:
         self.num_gen_twist = num_gen_twist
 
     def generate_routes(self):
-        point_routes = [self.start_point]
         random_alg = RandomAlgorithm(self.start_point, self.figures)
         new_population = []
-        figures_value = sum_rectangles(self.figures)
 
         # generate first random populations
         for iteration in range(self.population_size):
@@ -102,29 +121,29 @@ class GeneticAlgorithm:
 
         best_outputs = []
         for generation in range(self.num_generations):
-            print("Generation : ", generation)
+            # print("Generation : ", generation)
             # Measuring the fitness of each chromosome in the population.
             fitness = gen.cal_pop_fitness(new_population)
-            print("Fitness")
-            print(fitness)
+            # print("Fitness")
+            # print(fitness)
 
             index_min = np.argmin(fitness)
             best_outputs.append(new_population[index_min])
 
             # Selecting the best parents in the population for mating.
             parents = gen.select_mating_pool(new_population, fitness, self.num_parents_mating)
-            print("Parents")
-            print(parents)
+            # print("Parents")
+            # print(parents)
 
             # Generating next generation using crossover.
             offspring_crossover = gen.crossover(parents, offspring_size=(self.pop_size[0]-parents.shape[0], self.num_points), num_gen_twist=self.num_gen_twist)
-            print("Crossover")
-            print(offspring_crossover)
+            # print("Crossover")
+            # print(offspring_crossover)
 
             # Adding some variations to the offspring using mutation.
             offspring_mutation = gen.mutation(offspring_crossover, self.num_mutations)
-            print("Mutation")
-            print(offspring_mutation)
+            # print("Mutation")
+            # print(offspring_mutation)
 
             # Creating the new population based on the parents and offspring.
             new_population[0:parents.shape[0], :] = parents
@@ -136,14 +155,14 @@ class GeneticAlgorithm:
         # Then return the index of that solution corresponding to the best fitness.
         best_match_idx = np.where(fitness == np.max(fitness))
 
-        print("Best solution : ", new_population[best_match_idx, :])
-        print("Best solution fitness : ", fitness[best_match_idx])
+        # print("Best solution : ", new_population[best_match_idx, :])
+        # print("Best solution fitness : ", fitness[best_match_idx])
 
         # utils.draw_figures(self.figures, list(new_population[int(best_match_idx[0][0])]))
         return list(new_population[int(best_match_idx[0][0])])
 
 
-def sum_rectangles(figures):
+def sum_figures(figures):
     sum_distance = 0
 
     for rectangle in figures:
@@ -161,20 +180,21 @@ def sum_routes(routes):
 
 
 def value_function(figures, routes):
-    return sum_rectangles(figures) + sum_routes(routes)
+    return sum_figures(figures) + sum_routes(routes)
 
 
-def run_algorithm(algorithm, label=None):
+def run_algorithm(algorithm, figures, lim_point=100, label=None):
     start_time = time.time()
     points = algorithm.generate_routes()
     passed_time = time.time() - start_time
 
-    overall_value = value_function(rectangles, points)
+    rectangles_value = sum_figures(figures)
+    overall_value = value_function(figures, points)
     points_value = overall_value - rectangles_value
 
     lbl_str = 'Описание'
     lbl_str += '\n' + 'начальная точка={0},{1}'.format(points[0].x, points[0].y)
-    lbl_str += '\n' + 'кол-во фигур={0}'.format(len(rectangles))
+    lbl_str += '\n' + 'кол-во фигур={0}'.format(len(figures))
     lbl_str += '\n' + 'алгоритм={0}'.format(algorithm.name)
     lbl_str += '\n' + 'требуемое время={:2.3f}'.format(passed_time)
     lbl_str += '\n' + 'общая стоимость={:2.3f}'.format(overall_value)
@@ -184,29 +204,73 @@ def run_algorithm(algorithm, label=None):
     if label is not None:
         lbl_str += '\n' + label
 
-    utils.draw_figures(rectangles, points, 100, lbl_str)
+    utils.draw_figures(figures, points, lim_point, lbl_str)
 
 
-def run_genetic():
-    genetic_algorithm = GeneticAlgorithm(startPoint, rectangles)
-    label = 'размер популяции={0}'
+def run_genetic(figures, startPoint, population_size=8, num_generations=1000, num_parents_mating=4, lim_point=100, num_mutations=None, num_gen_twist=None):
+    genetic_algorithm = GeneticAlgorithm(startPoint, figures, population_size, num_generations, num_parents_mating, num_mutations, num_gen_twist)
+    label = 'размер популяции={0}'.format(genetic_algorithm.population_size)
     label += '\n' + 'кол-во поколений={0}'.format(genetic_algorithm.num_generations)
     label += '\n' + 'кол-во родителей={0}'.format(genetic_algorithm.num_parents_mating)
     label += '\n' + 'кол-во мутаций в хромосоме={0}'.format(genetic_algorithm.num_parents_mating)
     label += '\n' + 'кол-во смешивающихся ген={0}'.format(genetic_algorithm.num_gen_twist)
-    run_algorithm(genetic_algorithm, label)
+    run_algorithm(genetic_algorithm, figures, lim_point, label)
+
+
+def run_full(algorithm, figures, lim_point=100):
+    start_time = time.time()
+    points = algorithm.generate_routes()
+    passed_time = time.time() - start_time
+
+    rectangles_value = sum_figures(figures)
+    overall_value = value_function(figures, points)
+
+
+    passed_time = percentage(200, passed_time)
+    overall_value = percentage(70, overall_value)
+    points_value = overall_value - rectangles_value
+    
+    lbl_str = 'Описание'
+    lbl_str += '\n' + 'начальная точка={0},{1}'.format(points[0].x, points[0].y)
+    lbl_str += '\n' + 'кол-во фигур={0}'.format(len(figures))
+    lbl_str += '\n' + 'алгоритм={0}'.format(algorithm.name)
+    lbl_str += '\n' + 'требуемое время={:2.3f}'.format(passed_time)
+    lbl_str += '\n' + 'общая стоимость={:2.3f}'.format(overall_value)
+    lbl_str += '\n' + 'стоимость фигур={:2.3f}'.format(rectangles_value)
+    lbl_str += '\n' + 'стоимость маршрута={:2.3f}'.format(points_value)
+
+
+    utils.draw_figures(figures, points, lim_point, lbl_str)
+    # genetic_algorithm = GeneticAlgorithm(startPoint, rectangles)
+    # label = 'размер популяции={0}'.format(genetic_algorithm.population_size)
+    # label += '\n' + 'кол-во поколений={0}'.format(genetic_algorithm.num_generations)
+    # label += '\n' + 'кол-во родителей={0}'.format(genetic_algorithm.num_parents_mating)
+    # label += '\n' + 'кол-во мутаций в хромосоме={0}'.format(genetic_algorithm.num_parents_mating)
+    # label += '\n' + 'кол-во смешивающихся ген={0}'.format(genetic_algorithm.num_gen_twist)
+    # run_algorithm(genetic_algorithm, lim_point, label)
+
+def run_genetic_inner(lim_point=100):
+    s = None
+    # genetic_algorithm = GeneticAlgorithm(startPoint, rectangles)
+    # label = 'размер популяции={0}'.format(genetic_algorithm.population_size)
+    # label += '\n' + 'кол-во поколений={0}'.format(genetic_algorithm.num_generations)
+    # label += '\n' + 'кол-во родителей={0}'.format(genetic_algorithm.num_parents_mating)
+    # label += '\n' + 'кол-во мутаций в хромосоме={0}'.format(genetic_algorithm.num_parents_mating)
+    # label += '\n' + 'кол-во смешивающихся ген={0}'.format(genetic_algorithm.num_gen_twist)
+    # run_algorithm(genetic_algorithm, lim_point, label)
+
 
 if __name__ == "__main__":
-    rectangles = utils.read_rectangles('../data/rectangles_file.csv')
-    startPoint = Point(0, 0)
-    rectangles_value = sum_rectangles(rectangles)
+    s = None
+    # rectangles = utils.read_rectangles('../data/rectangles_file.csv')
+    # startPoint = Point(0, 0)
 
     # greedy_algorithm = GreedyAlgorithm(startPoint, rectangles)
-    # run_algorithm(greedy_algorithm)
+    # run_algorithm(greedy_algorithm, 500)
 
     # random_algorithm = RandomAlgorithm(startPoint, rectangles)
     # run_algorithm(random_algorithm)
 
-    run_genetic()
+    # run_genetic_inner()
     # run_algorithm(genetic_algorithm)
 
